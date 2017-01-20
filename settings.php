@@ -33,10 +33,10 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configcheckbox('block_uog_course_overview/showwelcomearea', new lang_string('showwelcomearea', 'block_uog_course_overview'),
         new lang_string('showwelcomeareadesc', 'block_uog_course_overview'), 1, PARAM_INT));
     $showcategories = array(
-        BLOCKS_uog_course_overview_SHOWCATEGORIES_NONE => new lang_string('none', 'block_uog_course_overview'),
-        BLOCKS_uog_course_overview_SHOWCATEGORIES_ONLY_PARENT_NAME => new lang_string('onlyparentname', 'block_uog_course_overview'),
-        BLOCKS_uog_course_overview_SHOWCATEGORIES_FULL_PATH => new lang_string('fullpath', 'block_uog_course_overview')
+        BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_NONE => new lang_string('none', 'block_uog_course_overview'),
+        BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_ONLY_PARENT_NAME => new lang_string('onlyparentname', 'block_uog_course_overview'),
+        BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_FULL_PATH => new lang_string('fullpath', 'block_uog_course_overview')
     );
     $settings->add(new admin_setting_configselect('block_uog_course_overview/showcategories', new lang_string('showcategories', 'block_uog_course_overview'),
-        new lang_string('showcategoriesdesc', 'block_uog_course_overview'), BLOCKS_uog_course_overview_SHOWCATEGORIES_NONE, $showcategories));
+        new lang_string('showcategoriesdesc', 'block_uog_course_overview'), BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_NONE, $showcategories));
 }

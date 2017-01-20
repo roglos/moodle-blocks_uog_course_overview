@@ -22,9 +22,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define('BLOCKS_uog_course_overview_SHOWCATEGORIES_NONE', '0');
-define('BLOCKS_uog_course_overview_SHOWCATEGORIES_ONLY_PARENT_NAME', '1');
-define('BLOCKS_uog_course_overview_SHOWCATEGORIES_FULL_PATH', '2');
+define('BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_NONE', '0');
+define('BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_ONLY_PARENT_NAME', '1');
+define('BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_FULL_PATH', '2');
 
 /**
  * Display overview for courses

@@ -23,13 +23,6 @@
  */
 defined('MOODLE_INTERNAL') || die;
 
-require_once($CFG->dirroot.'/blocks/uog_course_overview/locallib.php');
-require_once($CFG->dirroot . '/course/renderer.php');
-require_once($CFG->libdir. '/coursecatlib.php');
-require_once($CFG->dirroot.'/user/profile/lib.php');
-require_once($CFG->dirroot.'/theme/glostest/renderers/course_renderer.php');
-
-
 /**
  * uog_course_overview block rendrer
  *
@@ -43,31 +36,9 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
      *
      * @param array $courses list of courses in sorted order
      * @param array $overviews list of course overviews
-     * @return string html to be displayed in course_overview block
+     * @return string html to be displayed in uog_course_overview block
      */
     public function uog_course_overview($courses, $overviews) {
-        global $CFG, $PAGE, $USER;
-        profile_user_record($USER->id);
-        switch ($USER->profile['overviewlayout']) {
-            case 'Tiled':
-                $type = 1;
-                break;
-            case 'Simple list':
-                $type = 3;
-                break;
-            case 'Slider':
-                $type = 4;
-                break;
-            default: // Standard list.
-                $type = 2;
-        }
-        // While developing.
-//        if ($type > 3) { $type = 2; }
-
-        if ($type == 4) {
-            return '';
-        }
-
         $html = '';
         $config = get_config('block_uog_course_overview');
         if ($config->showcategories != BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_NONE) {
@@ -78,13 +49,13 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
         $courseordernumber = 0;
         $maxcourses = count($courses);
         $userediting = false;
-        // Intialise string/icon etc if user is editing and courses > 1.
+        // Intialise string/icon etc if user is editing and courses > 1
         if ($this->page->user_is_editing() && (count($courses) > 1)) {
             $userediting = true;
             $this->page->requires->js_init_call('M.block_uog_course_overview.add_handles');
 
-            // Check if course is moving.
-            $ismovingcourse = optional_param('movecourse', false, PARAM_BOOL);
+            // Check if course is moving
+            $ismovingcourse = optional_param('movecourse', FALSE, PARAM_BOOL);
             $movingcourseid = optional_param('courseid', 0, PARAM_INT);
         }
 
@@ -102,12 +73,12 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
             $html .= $this->output->box_end();
 
             $moveurl = new moodle_url('/blocks/uog_course_overview/move.php',
-                    array('sesskey' => sesskey(), 'moveto' => 0, 'courseid' => $movingcourseid));
+                        array('sesskey' => sesskey(), 'moveto' => 0, 'courseid' => $movingcourseid));
             // Create move icon, so it can be used.
             $movetofirsticon = html_writer::empty_tag('img',
-            array('src' => $this->output->pix_url('movehere'),
-            'alt' => get_string('movetofirst', 'block_uog_course_overview', $courses[$movingcourseid]->fullname),
-            'title' => get_string('movehere')));
+                    array('src' => $this->output->pix_url('movehere'),
+                        'alt' => get_string('movetofirst', 'block_uog_course_overview', $courses[$movingcourseid]->fullname),
+                        'title' => get_string('movehere')));
             $moveurl = html_writer::link($moveurl, $movetofirsticon);
             $html .= html_writer::tag('div', $moveurl, array('class' => 'movehere'));
         }
@@ -122,57 +93,18 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
             } else {
                 $moduletiming = 'showforsemester';
             }
-
-            // Display course overview files.
-            if ($course instanceof stdClass) {
-                require_once($CFG->libdir. '/coursecatlib.php');
-                $course = new course_in_list($course);
-            }
-
-            $contentimages = '';
-            foreach ($course->get_course_overviewfiles() as $file) {
-                $isimage = $file->is_valid_image();
-                $url = file_encode_url("$CFG->wwwroot/pluginfile.php",
-                        '/'. $file->get_contextid(). '/'. $file->get_component(). '/'.
-                        $file->get_filearea(). $file->get_filepath(). $file->get_filename(), !$isimage);
-                if ($contentimages == '') {
-                    if ($isimage) {
-                        $contentimages .= "<div class='cimbox' style='background: #FFF url($url) no-repeat center center;
-                                background-size: contain;'></div>";
-                    }
-                }
-            }
-            if (strlen($contentimages) == 0) {
-                // Default image.
-                $url = $PAGE->theme->setting_file_url('frontpagerendererdefaultimage', 'frontpagerendererdefaultimage');
-                $contentimages .= "<div class='cimbox' style='background: #FFF url($url) no-repeat center center;
-                        background-size: contain;'></div>";
-            }
-            if ($type == 1) {
-                $panelclasses = 'coursebox panel panel-primary coursebox-content '.$moduletiming;
-                $wrapperclass = 'panel-body clearfix';
-                $headerlevel = 3;
-            } else {
-                $panelclasses = 'coursebox '.$moduletiming;
-                $wrapperclass = 'course_title';
-                $headerlevel = 2;
-            }
-            if ($type == 3) {
-                $panelclasses .= 'coursesimplelist';
-            }
-
-            $html .= $this->output->box_start($panelclasses, "course-{$course->id}");
-            $html .= html_writer::start_tag('div', array('class' => $wrapperclass));
+            $html .= $this->output->box_start('coursebox '.$moduletiming, "course-{$course->id}");
+            $html .= html_writer::start_tag('div', array('class' => 'course_title '));
             // If user is editing, then add move icons.
             if ($userediting && !$ismovingcourse) {
                 $moveicon = html_writer::empty_tag('img',
-                array('src' => $this->pix_url('t/move')->out(false),
-                'alt' => get_string('movecourse', 'block_course_overview', $course->fullname),
-                'title' => get_string('move')));
-                $moveurl = new moodle_url($this->page->url,
-                array('sesskey' => sesskey(), 'movecourse' => 1, 'courseid' => $course->id));
+                        array('src' => $this->pix_url('t/move')->out(false),
+                            'alt' => get_string('movecourse', 'block_uog_course_overview', $course->fullname),
+                            'title' => get_string('move')));
+                $moveurl = new moodle_url($this->page->url, array('sesskey' => sesskey(), 'movecourse' => 1, 'courseid' => $course->id));
                 $moveurl = html_writer::link($moveurl, $moveicon);
                 $html .= html_writer::tag('div', $moveurl, array('class' => 'move'));
+
             }
 
             // No need to pass title through s() here as it will be done automatically by html_writer.
@@ -181,28 +113,14 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
                 if (empty($course->visible)) {
                     $attributes['class'] = 'dimmed';
                 }
-                if ($type == 1) {
-                    $html .= $contentimages;
-                }
                 $courseurl = new moodle_url('/course/view.php', array('id' => $course->id));
                 $coursefullname = format_string(get_course_display_name_for_list($course), true, $course->id);
                 $link = html_writer::link($courseurl, $coursefullname, $attributes);
-                $html .= $this->output->heading($link, $headerlevel, 'title');
-                if ($type == 1 && isset($overviews[$course->id]) && !$ismovingcourse) {
-                    if ($this->activity_display($course, $overviews[$course->id]) == '') {
-                        continue;
-                    } else {
-                        $html .= html_writer::start_tag('div', array('class' => 'courseboxactivitynotice'));
-                        $html .= '<p>'.get_string('courseboxactivitynotice', 'theme_glostest').'</p>';
-                        $html .= html_writer::end_tag('div');
-                    }
-                }
+                $html .= $this->output->heading($link, 2, 'title');
             } else {
                 $html .= $this->output->heading(html_writer::link(
-                    new moodle_url('/auth/mnet/jump.php',
-                            array('hostid' => $course->hostid, 'wantsurl' => '/course/view.php?id='.$course->remoteid)),
-                    format_string($course->shortname, true), $attributes)
-                    . ' (' . format_string($course->hostname) . ')', 2, 'title');
+                    new moodle_url('/auth/mnet/jump.php', array('hostid' => $course->hostid, 'wantsurl' => '/course/view.php?id='.$course->remoteid)),
+                    format_string($course->shortname, true), $attributes) . ' (' . format_string($course->hostname) . ')', 2, 'title');
             }
             $html .= $this->output->box('', 'flush');
             $html .= html_writer::end_tag('div');
@@ -216,26 +134,24 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
 
             // If user is moving courses, then down't show overview.
             if (isset($overviews[$course->id]) && !$ismovingcourse) {
-                $html .= $this->activity_display($course, $overviews[$course->id]);
+                $html .= $this->activity_display($course->id, $overviews[$course->id]);
             }
 
-            if ($type < 3) {
-                if ($config->showcategories != BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_NONE) {
-                    // List category parent or categories path here.
-                    $currentcategory = coursecat::get($course->category, IGNORE_MISSING);
-                    if ($currentcategory !== null) {
-                        $html .= html_writer::start_tag('div', array('class' => 'categorypath'));
-                        if ($config->showcategories == BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_FULL_PATH) {
-                            foreach ($currentcategory->get_parents() as $categoryid) {
-                                $category = coursecat::get($categoryid, IGNORE_MISSING);
-                                if ($category !== null) {
-                                    $html .= $category->get_formatted_name().' / ';
-                                }
+            if ($config->showcategories != BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_NONE) {
+                // List category parent or categories path here.
+                $currentcategory = coursecat::get($course->category, IGNORE_MISSING);
+                if ($currentcategory !== null) {
+                    $html .= html_writer::start_tag('div', array('class' => 'categorypath'));
+                    if ($config->showcategories == BLOCKS_UOG_COURSE_OVERVIEW_SHOWCATEGORIES_FULL_PATH) {
+                        foreach ($currentcategory->get_parents() as $categoryid) {
+                            $category = coursecat::get($categoryid, IGNORE_MISSING);
+                            if ($category !== null) {
+                                $html .= $category->get_formatted_name().' / ';
                             }
                         }
-                        $html .= $currentcategory->get_formatted_name();
-                        $html .= html_writer::end_tag('div');
                     }
+                    $html .= $currentcategory->get_formatted_name();
+                    $html .= html_writer::end_tag('div');
                 }
             }
 
@@ -249,9 +165,9 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
                 $a->movingcoursename = $courses[$movingcourseid]->fullname;
                 $a->currentcoursename = $course->fullname;
                 $movehereicon = html_writer::empty_tag('img',
-                array('src' => $this->output->pix_url('movehere'),
-                'alt' => get_string('moveafterhere', 'block_uog_course_overview', $a),
-                'title' => get_string('movehere')));
+                        array('src' => $this->output->pix_url('movehere'),
+                            'alt' => get_string('moveafterhere', 'block_uog_course_overview', $a),
+                            'title' => get_string('movehere')));
                 $moveurl = html_writer::link($moveurl, $movehereicon);
                 $html .= html_writer::tag('div', $moveurl, array('class' => 'movehere'));
             }
@@ -267,62 +183,23 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
      * @param array $overview overview of activities in course
      * @return string html of activities overview
      */
-    protected function activity_display($course, $overview) {
-        global $CFG, $PAGE, $USER;
-        profile_user_record($USER->id);
-        switch ($USER->profile['overviewlayout']) {
-            case 'Tiled':
-                $type = 1;
-                break;
-            case 'Simple list':
-                $type = 3;
-                break;
-            case 'Slider':
-                $type = 4;
-                break;
-            default:
-                $type = 2;
-        }
-        // While developing.
-//        if ($type > 3) { $type = 2; }
-//        $type = theme_glostest_get_setting('dashboardrenderer');
-        $cid = $course->id;
-        if ($type == 1) {
-            $output = html_writer::start_tag('div', array('class' => 'activity_info summary'));
-            $courseurl = new moodle_url('/course/view.php', array('id' => $cid));
-            $coursefullname = format_string(get_course_display_name_for_list($course), true, $cid);
-            $attributes['class'] = '';
-            $link = html_writer::link($courseurl, $coursefullname, $attributes);
-            $output .= $this->output->heading($link, 3, 'title');
-        } else {
-            $output = html_writer::start_tag('div', array('class' => 'activity_info'));
-        }
-
-        if ($type < 3) {
-            foreach (array_keys($overview) as $module) {
-                $output .= html_writer::start_tag('div', array('class' => 'activity_overview'));
-                $url = new moodle_url("/mod/$module/index.php", array('id' => $cid));
-                $modulename = get_string('modulename', $module);
-                $datatarget = '#region_'.$cid.'_'.$module.'_inner';
-                if ($type == 1) {
-                    $icontext = "<button class='btn btn-info' data-toggle = 'collapse' data-target = $datatarget>"
-                        .$this->output->pix_icon('icon', $modulename, 'mod_'
-                        .$module, array('class' => 'iconlarge'))."</button> ";
-                } else {
-                    $icontext = html_writer::link($url, $this->output->pix_icon('icon', $modulename, 'mod_'
-                    .$module, array('class' => 'iconlarge')));
-                }
-                if (get_string_manager()->string_exists("activityoverview", $module)) {
-                    $icontext .= get_string("activityoverview", $module);
-                } else {
-                    $icontext .= get_string("activityoverview", 'block_uog_course_overview', $modulename);
-                }
-
-                // Add collapsible region with overview text in it.
-                $output .= $this->collapsible_region($overview[$module], '', 'region_'.$cid.'_'.$module, $icontext, '', true);
-
-                $output .= html_writer::end_tag('div');
+    protected function activity_display($cid, $overview) {
+        $output = html_writer::start_tag('div', array('class' => 'activity_info'));
+        foreach (array_keys($overview) as $module) {
+            $output .= html_writer::start_tag('div', array('class' => 'activity_overview'));
+            $url = new moodle_url("/mod/$module/index.php", array('id' => $cid));
+            $modulename = get_string('modulename', $module);
+            $icontext = html_writer::link($url, $this->output->pix_icon('icon', $modulename, 'mod_'.$module, array('class'=>'iconlarge')));
+            if (get_string_manager()->string_exists("activityoverview", $module)) {
+                $icontext .= get_string("activityoverview", $module);
+            } else {
+                $icontext .= get_string("activityoverview", 'block_uog_course_overview', $modulename);
             }
+
+            // Add collapsible region with overview text in it.
+            $output .= $this->collapsible_region($overview[$module], '', 'region_'.$cid.'_'.$module, $icontext, '', true);
+
+            $output .= html_writer::end_tag('div');
         }
         $output .= html_writer::end_tag('div');
         return $output;
@@ -369,8 +246,7 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
         } else {
             $a = new stdClass();
             $a->coursecount = $total;
-            $a->showalllink = html_writer::link(new moodle_url('/my/index.php',
-                    array('mynumber' => block_course_overview::SHOW_ALL_COURSES)),
+            $a->showalllink = html_writer::link(new moodle_url('/my/index.php', array('mynumber' => block_uog_course_overview::SHOW_ALL_COURSES)),
                     get_string('showallcourses'));
             $output .= get_string('hiddencoursecountwithshowall'.$plural, 'block_uog_course_overview', $a);
         }
@@ -397,7 +273,7 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
             $output .= $this->collapsible_region_end();
 
             return $output;
-    }
+        }
 
     /**
      * Print (or return) the start of a collapsible region, that has a caption that can
@@ -413,24 +289,6 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
      * @return bool if true, return the HTML as a string, rather than printing it.
      */
     protected function collapsible_region_start($classes, $id, $caption, $userpref = '', $default = false) {
-        global $CFG, $PAGE, $USER;
-        profile_user_record($USER->id);
-        switch ($USER->profile['overviewlayout']) {
-            case 'Tiled':
-                $type = 1;
-                break;
-            case 'Simple list':
-                $type = 3;
-                break;
-            case 'Slider':
-                $type = 4;
-                break;
-            default:
-                $type = 2;
-        }
-        // While developing.
-//        if ($type > 2) { $type = 2; }
-//        $type = theme_glostest_get_setting('dashboardrenderer');
         // Work out the initial state.
         if (!empty($userpref) and is_string($userpref)) {
             user_preference_allow_ajax_update($userpref, PARAM_BOOL);
@@ -445,18 +303,13 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
         }
 
         $output = '';
-        if ($type == 1) {
-            $output .= $caption . ' ';
-            $output .= '</div><div id="' . $id . '_inner" class="collapse">';
-        } else {
-            $output .= '<div id="' . $id . '" class="collapsibleregion ' . $classes . '">';
-            $output .= '<div id="' . $id . '_sizer">';
-            $output .= '<div id="' . $id . '_caption" class="collapsibleregioncaption">';
-            $output .= $caption . ' ';
-            $output .= '</div><div id="' . $id . '_inner" class="collapsibleregioninner">';
-            $this->page->requires->js_init_call('M.block_uog_course_overview.collapsible',
-            array($id, $userpref, get_string('clicktohideshow')));
-        }
+        $output .= '<div id="' . $id . '" class="collapsibleregion ' . $classes . '">';
+        $output .= '<div id="' . $id . '_sizer">';
+        $output .= '<div id="' . $id . '_caption" class="collapsibleregioncaption">';
+        $output .= $caption . ' ';
+        $output .= '</div><div id="' . $id . '_inner" class="collapsibleregioninner">';
+        $this->page->requires->js_init_call('M.block_uog_course_overview.collapsible', array($id, $userpref, get_string('clicktohideshow')));
+
         return $output;
     }
 
@@ -466,29 +319,7 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
      * @return string return the HTML as a string, rather than printing it.
      */
     protected function collapsible_region_end() {
-        global $CFG, $PAGE, $USER;
-        profile_user_record($USER->id);
-        switch ($USER->profile['overviewlayout']) {
-            case 'Tiled':
-                $type = 1;
-                break;
-            case 'Simple list':
-                $type = 3;
-                break;
-            case 'Slider':
-                $type = 4;
-                break;
-            default:
-                $type = 2;
-        }
-        // While developing.
-//        if ($type > 2) { $type = 2; }
-//        $type = theme_glostest_get_setting('dashboardrenderer');
-        if ($type == 1) {
-            $output = '';
-        } else {
-            $output = '</div></div></div>';
-        }
+        $output = '</div></div></div>';
         return $output;
     }
 
@@ -499,7 +330,7 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
      * @return string html string for welcome area.
      */
     public function welcome_area($msgcount) {
-        global $USER;
+        global $CFG, $USER;
         $output = $this->output->box_start('welcome_area');
 
         $picture = $this->output->user_picture($USER, array('size' => 75, 'class' => 'welcome_userpicture'));
@@ -508,16 +339,19 @@ class block_uog_course_overview_renderer extends plugin_renderer_base {
         $output .= $this->output->box_start('welcome_message');
         $output .= $this->output->heading(get_string('welcome', 'block_uog_course_overview', $USER->firstname));
 
-        $plural = 's';
-        if ($msgcount > 0) {
-            $output .= get_string('youhavemessages', 'block_uog_course_overview', $msgcount);
-            if ($msgcount == 1) {
-                $plural = '';
+        if (!empty($CFG->messaging)) {
+            $plural = 's';
+            if ($msgcount > 0) {
+                $output .= get_string('youhavemessages', 'block_uog_course_overview', $msgcount);
+                if ($msgcount == 1) {
+                    $plural = '';
+                }
+            } else {
+                $output .= get_string('youhavenomessages', 'block_uog_course_overview');
             }
-        } else {
-            $output .= get_string('youhavenomessages', 'block_uog_course_overview');
+            $output .= html_writer::link(new moodle_url('/message/index.php'),
+                    get_string('message'.$plural, 'block_uog_course_overview'));
         }
-        $output .= html_writer::link(new moodle_url('/message/index.php'), get_string('message'.$plural, 'block_course_overview'));
         $output .= $this->output->box_end();
         $output .= $this->output->box('', 'flush');
         $output .= $this->output->box_end();
